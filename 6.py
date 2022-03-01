@@ -19,3 +19,18 @@ class Solution:
                 if j:
                     ans += j
         return ans
+
+# 找规律，O(n)
+class Solution:
+    def convert(self, s: str, numRows: int) -> str:
+        n, r = len(s), numRows
+        if numRows == 1 or r > n:
+            return s
+        ans = []
+        t = 2 * r - 2
+        for i in range(r): # line
+            for j in range(i, n, t):
+                ans.append(s[j])
+                if j + t - 2 * i < n and 0 < i < r - 1:
+                    ans.append(s[j+t-2*i])
+        return "".join(ans)
