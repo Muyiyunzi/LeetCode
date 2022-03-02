@@ -50,3 +50,25 @@ class Solution:
         return str(ans)
 
 # 优化版本
+class Solution:
+    def nearestPalindromic(self, n: str) -> str:
+        L = len(n)
+        half = int(n[0:(L+1)//2]) # candidates要加入int，索性这里直接取int
+        candidates = [10**L + 1, 10**(L-1)-1]
+        for x in range(half - 1, half + 2):
+            y = x if L%2 == 0 else x // 10
+            while y:
+                x = x * 10 + y % 10
+                y //= 10
+            candidates.append(x)
+        ans = -1
+        res = inf
+        for candidate in candidates:
+            res_new = abs(candidate - int(n))
+            if res_new == 0: continue
+            if res_new < res:
+                res = res_new
+                ans = candidate
+            elif res_new == res and candidate < ans:
+                ans = candidate
+        return str(ans)
