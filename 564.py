@@ -48,3 +48,5 @@ class Solution:
             elif res_new == res and candidate < ans:
                 ans = candidate
         return str(ans)
+
+# 优化版本
