@@ -15,3 +15,8 @@ class Solution:
             return 9 if num !=0 else 0
         else:
             return num % 9
+
+# 极简版
+class Solution:
+    def addDigits(self, num: int) -> int:
+        return num % 9 if num % 9 else 9 if num !=0 else 0
