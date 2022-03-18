@@ -1,4 +1,70 @@
-# CV大法了
+# 回来补课！不就是双向链表+哈希吗，我这里是一个个node，node里不带词典，反而更快些
+class Node:
+    def __init__(self, key: str):
+        self.next = None
+        self.prev = None
+        self.key = key
+        self.value = 1
+
+class AllOne:
+
+    def __init__(self):
+        self.keys = {}
+        self.root = Node("")
+        self.root.next = self.root
+        self.root.prev = self.root
+        self.root.key = ""
+
+    def inc(self, key: str) -> None:
+        if key not in self.keys:
+            tmp = Node(key)
+            tmp.prev = self.root
+            tmp.next = self.root.next
+            tmp.next.prev = tmp
+            tmp.prev.next = tmp
+            self.keys[key] = tmp
+        else:
+            tmp = self.keys[key]
+            tmp.value += 1
+            # value+1, swap with next
+            while(tmp.next is not self.root and tmp.next.value < tmp.value):
+                nxt = tmp.next
+                nxt.prev = tmp.prev
+                tmp.next = nxt.next
+
+                tmp.prev.next = nxt
+                nxt.next.prev = tmp
+
+                tmp.prev = nxt
+                nxt.next = tmp
+
+    def dec(self, key: str) -> None:
+        tmp = self.keys[key]
+        tmp.value -= 1
+        # value-1, swap with last
+        if not tmp.value:
+            tmp.prev.next = tmp.next
+            tmp.next.prev = tmp.prev
+            del self.keys[key]
+        else:
+            while(tmp.prev is not self.root and tmp.prev.value > tmp.value):
+                prv = tmp.prev
+                prv.next = tmp.next
+                tmp.prev = prv.prev
+
+                tmp.next.prev = prv
+                prv.prev.next = tmp
+
+                tmp.next = prv
+                prv.prev = tmp
+
+    def getMaxKey(self) -> str:
+        return self.root.prev.key
+
+    def getMinKey(self) -> str:
+        return self.root.next.key
+
+# 最开始CV大法的标准答案
 class Node:
     def __init__(self, key="", count=0):
         self.prev = None
