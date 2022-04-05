@@ -17,3 +17,8 @@ class Solution:
             n &= (n - 1)
             cnt += 1
         return cnt
+
+# 用库函数的时间居然是和方法一一样的
+class Solution:
+    def hammingWeight(self, n: int) -> int:
+        return n.bit_count()
