@@ -10,3 +10,12 @@ class Solution:
     def countNumbersWithUniqueDigits(self, n: int) -> int:
         ans = [1, 9, 9*9, 9*9*8, 9*9*8*7, 9*9*8*7*6, 9*9*8*7*6*5, 9*9*8*7*6*5*4, 9*9*8*7*6*5*4*3]
         return sum(ans[:n+1])
+
+# 乘法原理+动态规划
+class Solution:
+    def countNumbersWithUniqueDigits(self, n: int) -> int:
+        ans = [1] * 9
+        ans[1] = 9
+        for i in range(2, 9):
+            ans[i] = ans[i-1] * (11-i)
+        return sum(ans[:n+1])
