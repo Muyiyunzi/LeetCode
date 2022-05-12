@@ -30,3 +30,20 @@ class Solution:
                 if i == n-1:
                     ans = ans * check(cnt) % (10**9 + 7)
         return ans
+
+
+# 打表要学会放在前边
+MOD = 10**9 + 7
+f = [1,2,4]
+g = [1,2,4,8]
+for _ in range(10**5 - 2):
+    f.append((f[-1] + f[-2] + f[-3]) % MOD)
+    g.append((g[-1] + g[-2] + g[-3] + g[-4]) % MOD)
+
+class Solution:
+    def countTexts(self, pressedKeys: str) -> int:
+        ans = 1
+        for ch, grp in groupby(pressedKeys):
+            n = len(list(grp)) - 1
+            ans = ans * (g[n] if ch in "79" else f[n]) % MOD
+        return ans
