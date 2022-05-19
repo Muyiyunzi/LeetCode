@@ -1,4 +1,9 @@
-# 很好的联系排序的题目呀
+# 很好的练习排序的题目呀
+
+# 直接调用，56ms
+class Solution:
+    def sortArray(self, nums: List[int]) -> List[int]:
+        return sorted(nums)
 
 # 快速排序
 class Solution:
