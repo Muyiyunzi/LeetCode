@@ -222,4 +222,8 @@ bisect.bisect_right(a, 6)
 
 # 12. 拓扑排序
 
-参考资料：
+参考资料：[OI WIKI 拓扑排序](https://oi-wiki.org/graph/topo/)、[【拓扑排序】图论拓扑排序入门](https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&mid=2247489706&idx=1&sn=771cd807f39d1ca545640c0ef7e5baec)
+
+总的来说，拓扑排序是用来描述变量与变量之间的上下级关系的算法，可以梳理变量的依赖关系，因为称为“排序”。就是维护一个入度为 0 的顶点的集合
+
+# setdefault
