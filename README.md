@@ -194,6 +194,8 @@ strs = ["abc", "bce", "cae"]
 
 # 10. bisect
 
+参考资料：[python官方文档 - bisect](https://docs.python.org/3/library/bisect.html)
+
 bisect模块可以省略去写二分查找的过程。查找一般使用`bisect.bisect_left(a, x, lo=0, hi=len(a))`，这里默认a是sorted。bisect_left与bisect_right（等价于bisect）的区别在于，若a中存在对应的value，是插到左边还是右边。
 
 注意插入的过程是指，将x插入返回的位置i后，原[i:]的元素向后移一位，仍保持有序性。
@@ -211,6 +213,8 @@ bisect.bisect_right(a, 6)
 
 如果想找到位置之后再插入，可以一步使用`insort_left`，或是`insort_right`（等价于`insort`）。但要注意，二分查找的过程是O(log n)的，插入这个操作却是O(n)的，算复杂度时应该考虑插入操作。
 
+在python 3.10之后，还增加了key关键字，可以配合lambda函数使用。但一定注意，**必须保证a在经过key的映射后仍然是升序的，否则比较会出错**。再具体可以看[源码](https://github.com/python/cpython/blob/3.10/Lib/bisect.py)对于使用key的比较过程。
+
 # 11. 关于浮点精度问题
 
 参考资料：[【灵茶山艾府】第 294 场力扣周赛精讲 + 算法练习方法分享](https://www.bilibili.com/video/BV1RY4y157nW)、[IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)
@@ -224,6 +228,27 @@ bisect.bisect_right(a, 6)
 
 参考资料：[OI WIKI 拓扑排序](https://oi-wiki.org/graph/topo/)、[【拓扑排序】图论拓扑排序入门](https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&mid=2247489706&idx=1&sn=771cd807f39d1ca545640c0ef7e5baec)
 
-总的来说，拓扑排序是用来描述变量与变量之间的上下级关系的算法，可以梳理变量的依赖关系，因为称为“排序”。就是维护一个入度为 0 的顶点的集合
+总的来说，拓扑排序是用来描述变量与变量之间的上下级关系的算法，可以梳理变量的依赖关系，因而称为“排序”。典型模板题就是A比B大，C比D大，A又比C大……然后排一个总的次序。
 
-# setdefault
+
+算法的核心思想则是在一个DAG中，维护一个入度为 0 的顶点的集合。将变量视为图的结点，那么找到所有入度为0（没有边指向它）的顶点，删去其所有指出的边，然后重复此过程。若出现某一时刻没有没有入度为0的点，说明图中有环。因此，拓扑排序也很适合结合DFS或BFS（更推荐BFS），Kahn算法就是BFS下的toposort。
+
+# 13. random
+
+
+
+# 关于哈希、集合的操作
+
+- setdefault
+
+```python
+d = {}
+d.setdefault(key1, a)
+d.setdefault(key1, b)
+```
+
+那么`d[key1]`应该会输出a。setdefault的含义是，对某一键值尝试复制，若存在该键则不做改变，若不存在该键则赋值。这个操作很适合对“存在性”做记录，省去了一些if else的麻烦。
+
+# 记忆化搜索
+
+# 线段树
