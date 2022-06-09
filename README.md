@@ -235,6 +235,19 @@ bisect.bisect_right(a, 6)
 
 # 13. random
 
+- 基础工具
+  
+python自带的随机库是random。大部分函数都是左闭右开的。
+
+1. 生成整数随机数：randint(start, stop)，或者randrange(start, stop+1)，两者等价，前者左闭右闭，后者左闭右开，start和stop都是整数。
+2. 生成浮点随机数：uniform(x, y)，左闭右闭！
+3. 生成0-1的随机数：random()，这个是左闭右开，相当于是[0,1)
+4. 从序列返回一个随机元素：choice(seq)。要求序列非空，否则indexError。
+5. 从序列返回多个随机元素：choices(seq, weights=None, cum_weights=None, k=1)。同样要求序列非空（和k的大小无关）。注意choices可以按权重（list格式）或者累计权重来抽样，某些情况下很好使。另外注意choices返回的是list(list())。k=1的时候需要[0]一下。
+   
+更多细节可以参见：[python官方文档 - random](https://docs.python.org/3/library/random.html)。
+
+- 水塘抽样
 
 
 # 关于哈希、集合的操作
