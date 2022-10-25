@@ -5,17 +5,30 @@ My LeetCode Record
 
 [toc]
 
-# 1. split()与split(' ')：
+# split()与split(' ')：
 
-- `'a b'.split() == 'a b'.split(' ')`会返回True，事实上结果都是`['a', 'b']`；
-- 然而`''.split() == ''.split(' ')`却是False，因为空字符也会“被分割”……
-即：
-- `''.split()`返回的是`[]`；
-- 而`''.split(' ')`返回的是`['']`
-- 当然，split()会对包括`\n`等一切空字符一视同仁，而split(' ')则使用一且仅一个空格作为分隔符。见返回值如下：
-![fig](fig/split.png)
+split()会对包括`\n`等一切空字符一视同仁，而split(' ')则使用一且仅一个空格作为分隔符。
 
-# 2. 树的前、中、后序遍历模板
+做如下判断：
+```python
+print('a b'.split() == 'a b'.split(' '))
+print(''.split() == ''.split(' '))
+```
+
+显然，第一个判断会返回True，事实上结果都是`['a', 'b']`；但第二个结果却应该是False，因为空字符也会被分割判断，即：
+
+```python
+print(''.split()) # -> []
+print(''.split(' ')) # -> ['']
+
+print('a b'.split()) # -> ['a', 'b']
+print('a\nb'.split()) # -> ['a', 'b']
+print('a b'.split(' ')) # -> ['a', 'b']
+```
+
+注意，没有`'a'.split('')`这种东西，会报错empty separator。
+
+# 树的前、中、后序遍历模板
 
 - 首先是递归写法：
 
@@ -128,30 +141,131 @@ while stack or cur:
 return ans
 ```
 
-# 3. nonlocal
+# nonlocal，global与作用域搜索顺序
 
-主要应用在嵌套函数、闭包中，将**不可变类型的数据变为自由变量**；对于可变变量就没必要使用了，比如list等。
+当我们在python中访问某一对象时，其会根据L-E-G-B的作用域（scope）搜索顺序去寻找这一变量。其中，“LEGB”依次为：
+- Local，局部作用域，例如某个函数、lambda表达式中。此作用域包含了当前函数下的所有变量内容，且这些变量只在函数被调用时产生（而非def时），理论上被调用多少次就产生多少个local scope。
+- If the local scope is an inner or nested function, then the enclosing scope is the scope of the outer or enclosing function
+- Enclosing，包含作用域，如果Local域处于**一个**函数的内部或是被包装的函数，那么其外围或者包含它的函数，就是Enclosing作用域。例如某个def1中有个def2，def2是L，那么def1就是其E。如果嵌套的函数更多，就应该有更多级的E。建议理解为介于L与G之间。
+- Global，全局作用域，这个好理解，就是整个script下的空间，是整个python脚本最高级、最外围的一层。
+- Built-in，内建作用域，这个一般不会涉及，属于是加载python脚本时就被自动加载的内容，例如abs，min，max这些内建函数等等，但这也侧面提醒我们在命名变量时尽量不要和这些内建函数名重叠。
 
-nonlocal是针对上一级函数而言的，若上层函数不存在该变量则会报错；global则表示全局变量。
+寻找的顺序便是，**如果L找不到，就向上逐级地找E，再找不到就找G，直到B**。
 
-另外可以避免nonlocal的方式是使用全局变量，即对self.xxx修改赋值即可
+举个例子就明白了，如下演示了一个L向上找E再向上找G的例子：
+```python
+from math import *
+a = -1 # G空间
+def f1(): 
+    # E空间
+    def f2():
+        # L空间
+        print(a) # L里没有，E也没有，G找到了
+    f2()
 
-------------
+f1() # -> -1
+```
+B在寻找变量时一般不会涉及，但注意设置变量名时尽量避开一些关键字，例如下面的代码就会报错（因为变量名检索时G中的max是优先于B的，所以max被认为是一个int型变量）：
+```python
+max = -1
+arr = [1,5,3]
+print(max(arr))
+```
 
-闭包：能够读取外部函数内的变量的函数
-作用1：将外层函数内的局部变量和外层函数的外部连接起来的一座桥梁【闭包就是对外部私货的轻量封装】
-作用2：将外层函数的变量持久地保存在内存中
-关于闭包更多可见：[Python闭包（Closure）详解](https://zhuanlan.zhihu.com/p/453787908)
+---
 
-# 4. @cache
+以上内容仅仅是变量名访问，那么当我们不想按照这样的优先级去检索变量，或是要修改外部变量值的时候，就会用nonlocal和global关键字。
 
-此机制源自于functools的lru_cache，在python 3.9之后，其直接被集成在python中，名为cache。我们通常通过装饰器的方式使用之（即对def前添加`@cache`），如果python版本过低，也可以通过`import functools`后`@functools.lru_cache`使用。
+- nonlocal只能应用在L访问**和修改**E中变量的情况下；通俗地讲，nonlocal只能逐级地向上访问是否存在该变量，直到找到或找不到为止，且上级作用域不能是G。
+- global则用于**定义**、访问和修改G中的变量。
+- 注意，使用nonlocal时，其所有的上级E中必须有相关的变量先定义好才能被nonlocal调用，global则不必在G中预先定义，可以在global之后新定义（但不能直接修改值）。nonlocal x意为“找到更上级的x，我要修改他”，而global x则好像是在说“我接下来对x的操作是全局性的”。
+- 无论是nonlocal还是global，Local中都不得实现定义同名的变量（但使用global时，E可以有同名变量）。
+- 无论是nonlocal还是global，都是为了将**不可变类型的数据变为自由变量**，对于可变变量就没必要使用了，比如list等。究其根本，可能是因为局部变量都会产生新的地址，修改了值也就修改了地址，而list等添加新数值或修改时不改变其内存地址。
 
-缓存机制可以可以将函数调用的结果存入缓存中，从而在再次递归调用时达到复用效果，对像斐波那契数列一类问题的递归解法时有着加速和避免内存爆掉的作用，**广泛应用于记忆化搜索即DP问题**。注意函数的输入尽量是单值变量/元组，对输入是list、dict等结构时不适用。
+举个例子就比较清楚了：
 
-参考资料：[Python 缓存机制与 functools.lru_cache](http://kuanghy.github.io/2016/04/20/python-cache)，[Python 中 lru_cache 的使用和实现](https://www.cnblogs.com/zikcheng/p/14322577.html)，[Python缓存lru_cache的介绍和讲解](https://quniao.blog.csdn.net/article/details/120726050)
+```python
+def scope_test():
+    def do_local():
+        x = 1 # 只存活于此方法中，如果写为x+=2会报错
+    def do_nonlocal():
+        nonlocal x
+        x = 2
+    def do_global():
+        global x
+        x = 3 # 如果此处写为x += 3也会报错，因为此时全局其实没有定义x，这里x=3才刚刚定义。
+    x = 4
+    do_local()
+    print('do local:', x)
+    do_nonlocal()
+    print('do nonlocal:', x)
+    do_global()
+    print('do global:', x) # 全局变量x被修改，局部不变。
+    
+scope_test()
+print('finally:', x)
+```
+运行以上程序将会输出：
+```plain
+do local: 4
+do nonlocal: 2
+do global: 2
+finally: 3
+```
 
-# 5. 如何让tuple/list的对应元素相加？
+对于list等结构，是不需要使用nonlocal或者global的，但也要注意因为其可变性，要活用切片或者`.copy()`规避，例如：
+
+```python
+a1 = []
+a2 = []
+b = []
+c = 1
+def test():
+    global c
+    b.append(c)
+    a1.append(b)
+    a2.append(b[:]) # 此处也可以使用b.copy()
+    c += 1
+
+test()
+test()
+print(a1, a2)
+```
+并且，空列表也不能像`a = b = 1`这样来使用`a = b = []`赋值，例如下面的代码：
+```python
+a = b = []
+c = d = 1
+print(id(a), id(b))
+print(id(c), id(d))
+a.append(1)
+b.append(2)
+c += 1
+d += 2
+print(id(a), id(b))
+print(id(c), id(d))
+print(a, b)
+```
+输出：
+```plain
+57500352 57500352
+8538880 8538880
+57500352 57500352
+8538904 8538928
+[1, 2] [1, 2]
+```
+
+从输出可以看出，此时a、b两个列表被关联了。
+
+另外，如果当前域在某个class中，并传入了self参数，也可以巧用self关键字通过使用self.xxx修改其属性来尽可能避免频繁使用nonlocal。【好吧我摊牌了，可以说专治LeetCode题了】
+
+---
+
+以上内容提到了闭包，即“能够读取外部函数内的变量的函数”，但这个似乎不太重要，关于闭包更多可见：[Python闭包（Closure）详解](https://zhuanlan.zhihu.com/p/453787908)
+
+其他参考资料：[Python中的global关键字，你了解吗？](https://zhuanlan.zhihu.com/p/111284408)，[Using the LEGB Rule for Python Scope](https://realpython.com/python-scope-legb-rule/#:~:text=Enclosing%20(or%20nonlocal)%20scope%20is,define%20in%20the%20enclosing%20function.)
+
+
+# 如何让tuple/list的对应元素相加？
 
 可以通过`list(map(sum, zip(list1, list2)))`来达成，tuple同理。zip操作是对输入的每个对象enumerate并行封装，例如：
 ```python
@@ -166,30 +280,84 @@ list(zip(list1,list2,list3))
 
 注意，函数的返回如果写`return a, b`实际上是返回的tuple`(a, b)`。
 
-# 6. *arg和**arg
+# *arg和**arg
 
 作为函数调用时，\*用于解包tuple对象，\*\*用于解包dict对象。
 这样比较抽象，比如
 ```python
-strs = ["abc", "bce", "cae"]
+strs = ["aaa", "bbb", "ccc"]
 ```
-`zip(*strs)`等同于`zip("abc", "bce", "cae")`，然而不等同于`zip(strs)`或者`zip(strs[i] for i in range(3))`或者`zip(i for i in strs)`，最后总是差一层tuple。
+`zip(*strs)`等同于`zip("aaa", "bbb", "ccc")`（把list中的元素复制过来），然而不等同于`zip(strs)`或者`zip(strs[i] for i in range(3))`或者`zip(i for i in strs)`或者`zip(tuple(strs))`，最后总是差一层tuple（有趣的是，这四个表达式输出结果是相同的)。
 
-# 7. itertools库的使用
+当我们需要zip一个list本身的时，我们不能总是把其元素复制，或是手敲出来吧，这时使用\*就比较巧妙了。
 
-[「Python」Python 标准库之 itertools 使用指南](https://blog.csdn.net/qq_43401035/article/details/119253871)
+而\*\*用于将一个dict对象转化为`key=value`的形式，例如`params={'x':1,'y':2,'z':3}`，那么`**params`就意味着`x=1, y=2, z=3`可以用于传参。根据具体的使用方式可见[Python中的*（星号）和**(双星号）完全详解](https://blog.csdn.net/zkk9527/article/details/88675129)
 
-- pairwise，可以创建一个迭代对象的两两一组迭代；若元素少于2个则返回empty。比如"abc"就会产生"ab", "bc"。
-- groupby，对一个迭代器（通常是字符串）进行迭代分组。通常使用`for ch, grp in groupby(*)`，但注意此时grp是_grouper object，需要转为list会好使一些。
-- `combinations(iterable, r)`，其中iterable是一个可迭代的对象，r为数量，即在iterable中选出r个作为组合（默认按原顺序排列）。这样的语句可以快速地完成Cxx的操作，很方便。 
-- `permutations(iterable, r=None)`，有组合自然也就有排列，如果不给出r默认全长排列。有些时候暴力搜索会很好使。
+# itertools库的使用
+
+[「Python」Python 标准库之 itertools 使用指南](https://blog.csdn.net/qq_43401035/article/details/119253871)、[Python 3 Library for itertools](https://docs.python.org/3/library/itertools.html)
+
+## 两两捉对：pairwise
+
+`pairwise(iterable)`，可以创建一个迭代对象的两两一组迭代；若元素少于2个则返回empty。使用时通常可以`for i, j in pairwise(obj)`比如"abc"就会产生"ab", "bc"。
+
+## 物以类聚：groupby
+
+`groupby(iterable, key=None)`，对一个迭代器（通常是字符串）根据关键字进行迭代分组。简单地说就是揪出一个人，看看它的成分（传入一个keyfunc，返回一个键值key），如果当前元素和前面的人是一个成分就放到同一组里，否则根据当前这个人的成分新开一个组，继续向后寻找。
+
+【此段太细节可不看】具体一些，其在迭代时的底层逻辑是：
+1. 首先初始化一个currkey（当前键）和tgtkey（目标键）都为空对象；随后开始遍历。
+2. 如果当前键与目标键相同，获取当前的value（*以防是最后一次遍历，将会except跳出*）；否则将目标键赋为当前键；（*如此，在遍历第一个元素时必然更新当前键*）
+3. 向后遍历，将当前键与目标键相同的所有元素放到一个grouper对象里，当前键与目标键不同时停止并返回key与group对象。
+4. 不断循环2-3，直到无法获取当前键值（遍历至末尾）终止遍历。
 
 
-# 8. 对称情况
+于是，key参数**传入的是一个函数**。在不输入key时默认为恒等映射函数（`lambda x:x`），否则你需要定义一个函数`def(x): return key`，返回的key的数据类型不限。
+
+在使用时我们通常写为`for key, grp in groupby(obj)`，但注意此时grp是一个_grouper对象，如果需要进一步使用请转为list。
+
+举个例子：
+```python
+for key, grp in itertools.groupby("111334"):
+    print(key, list(grp))
+# ->
+# 1 ['1', '1', '1']
+# 3 ['3', '3']
+# 4 ['4']
+```
+
+```python
+div_size = lambda x: 'small' if x < 3 else 'medium' if x == 3 else 'big'
+for key, grp in itertools.groupby([1,2,3,4,5,1,3,4,5], key=div_size):
+    print(key, list(grp))
+# ->
+# small [1, 2]
+# medium [3]
+# big [4, 5]
+# small [1]
+# medium [3]
+# big [4, 5]
+```
+
+可以看出，其和SQL中的GROUP BY并不同，python这里是不会合并前面后边key相同的组，而是按序输出；SQL则会合并这些key相同的组。
+
+## 排列组合：combinations, permutations
+- `combinations(iterable, r)`，其中iterable是一个可迭代的对象，r为数量，即在iterable中选出r个作为组合（默认按原顺序排列）。这样的语句可以快速地完成$C_n^r$的操作，很方便。 
+- `permutations(iterable, r=None)`，有组合自然也就有排列，如果不给出r默认全长排列，给出r时相当于完成了$A_n^r$的操作。有些需要暴力搜索的时候会很好使。
+
+## 前缀和、前缀数组：accumulate
+
+`accumulate(iterable, func=operator.add)`能够自动帮我们计算好前缀和，甚至可以计算前缀积、前缀最值等。当不传入func时默认计算前缀和，也可以自定义一个函数`def(x, y)`用于计算两个迭代对象之间的关系，如乘法、max函数等等，可以实现自定义的前缀功能。
+
+注意：
+- 返回的时accumulate对象，必要时需要用list()进行转换。
+- 其内部源码使用的是next方法，所以返回的对象第一个元素，对应着原iterable的第一个元素。（这很好地让前缀和默认了0，前缀积默认了1，都很好使，但有些情况需要特殊考虑）
+
+# 对称情况
 
 当出现对称情况时，复制代码是一件很蠢的事情，有时候可以试试交换输入，把f(a, b)变成f(b, a)
 
-# 9. sort与lambda函数
+# sort与lambda函数
 
 考虑一个list如`arr = [10, 8, 7, 2, 5, 9, 1]`。在python内置的sort之后他将会变成`[1, 2, 5, 7, 8, 9, 10]`，有如下一些细节：
 
@@ -309,107 +477,35 @@ a.sort(key=functools.cmp_to_key(rule))
 
 参考资料：[Python排序sorted()函数里cmp_to_key和cmp](https://zhuanlan.zhihu.com/p/505195096)
 
-# 10. bisect
-
-参考资料：[python官方文档 - bisect](https://docs.python.org/3/library/bisect.html)
-
-bisect模块可以省略去写二分查找的过程。查找一般使用`bisect.bisect_left(a, x, lo=0, hi=len(a))`，这里默认a是sorted。bisect_left与bisect_right（等价于bisect）的区别在于，若a中存在对应的value，是插到左边还是右边。
-
-注意插入的过程是指，将x插入返回的位置i后，原[i:]的元素向后移一位，仍保持有序性。
-
-e.g.：
-
-```python
-import bisect
-a = [1, 4, 6, 6, 8, 20]
-bisect.bisect_left(a, 6)
-bisect.bisect(a, 6)
-bisect.bisect_right(a, 6)
-```
-上述三条分别返回2，4，4。
-
-如果想找到位置之后再插入，可以一步使用`insort_left`，或是`insort_right`（等价于`insort`）。但要注意，二分查找的过程是O(log n)的，插入这个操作却是O(n)的，算复杂度时应该考虑插入操作。
-
-在python 3.10之后，还增加了key关键字，可以配合lambda函数使用。但一定注意，**必须保证a在经过key的映射后仍然是升序的，否则比较会出错**。再具体可以看[源码](https://github.com/python/cpython/blob/3.10/Lib/bisect.py)对于使用key的比较过程。
-
-# 11. 关于浮点精度问题
-
-参考资料：[【灵茶山艾府】第 294 场力扣周赛精讲 + 算法练习方法分享](https://www.bilibili.com/video/BV1RY4y157nW)、[IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)
-
-本以为python不会溢出，但还是在294周赛中中招了。python3的int（整数）是可以非常非常长的，所以不用担心；但float64的精度（C++中的double）只能到10^16左右(1 << 53)，所以当出现`1/(10**9-1)和1/(10**9-1)`作差时，分母相乘溢出。
-
-总之，一切除法比较尽量转化成乘法比较！
-
-
-# 12. 拓扑排序
-
-参考资料：[OI WIKI 拓扑排序](https://oi-wiki.org/graph/topo/)、[【拓扑排序】图论拓扑排序入门](https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&mid=2247489706&idx=1&sn=771cd807f39d1ca545640c0ef7e5baec)
-
-总的来说，拓扑排序是用来描述变量与变量之间的上下级关系的算法，可以梳理变量的依赖关系，因而称为“排序”。典型模板题就是A比B大，C比D大，A又比C大……然后排一个总的次序。
-
-
-算法的核心思想则是在一个DAG中，维护一个入度为 0 的顶点的集合。将变量视为图的结点，那么找到所有入度为0（没有边指向它）的顶点，删去其所有指出的边，然后重复此过程。若出现某一时刻没有没有入度为0的点，说明图中有环。因此，拓扑排序也很适合结合DFS或BFS（更推荐BFS），Kahn算法就是BFS下的toposort。
-
-# 13. random
-
-- 基础工具
-  
-python自带的随机库是random。
-
-1. 生成整数随机数：randint(start, stop)，或者randrange(start, stop+1)，两者等价，前者左闭右闭，后者左闭右开，start和stop都是整数。
-2. 生成浮点随机数：uniform(x, y)，左闭右闭！
-3. 生成0-1的随机数：random()，这个是左闭右开，相当于是[0,1)
-4. 从序列返回一个随机元素：choice(seq)。要求序列非空，否则indexError。
-5. 从序列返回多个随机元素：choices(seq, weights=None, cum_weights=None, k=1)。同样要求序列非空（和k的大小无关）。注意choices可以按权重（list格式）或者累计权重来抽样，某些情况下很好使。另外注意choices返回的是list(list())。k=1的时候需要[0]一下。
-   
-更多细节可以参见：[python官方文档 - random](https://docs.python.org/3/library/random.html)。
-
-- 水塘抽样
-
-# 14. @staticmethod
-
-声明，不强制要求传递参数的静态方法。[Python staticmethod() 函数](https://www.runoob.com/python/python-func-staticmethod.html)
-
-
-# 15. 关于哈希、集合的操作
-
-- setdefault
-
-```python
-d = {}
-d.setdefault(key1, a)
-d.setdefault(key1, b)
-```
-
-那么`d[key1]`应该会输出a。setdefault的含义是，对某一键值尝试复制，若存在该键则不做改变，若不存在该键则赋值。这个操作很适合对“存在性”做记录，省去了一些if else的麻烦。
-
-
-
-# 线段树
-
-# 排序总结
+# 经典排序总结
 
 参考资料：[排序算法总结](https://www.runoob.com/w3cnote/sort-algorithm-summary.html)
 
-lowb三人组：冒泡，选择，插入。时间复杂度均为$O(n^2)$
+## lowb三人组
+
+冒泡，选择，插入。时间复杂度均为$O(n^2)$
 
 - 冒泡排序就像泡泡浮起来，所以说是两两比较，把小的放到前边大的放后边，典型场景就是**小时候排队，两两互比身高站前后**；
 - 选择排序是每次找到序列中最小的一个放在前面，很像冒泡，也像是排队，但像是老师给安排队伍，**从全局来看而非两两比较**；
 - 插入排序典型场景就是**打扑克揭牌**，每揭一张我们就插入到本就有序的牌堆中，保持其有序性至终止。
 
-高级三人组：快排，归并，堆。时间复杂度均为$O(nlogn)$
+## 高级三人组
+
+快排，归并，堆。时间复杂度均为$O(nlogn)$
 
 - 快速排序简言之就是分治+pivot，但在具体实现上，可以通过双指针查找。一般来讲我们选择第一个数为pivot（或理解为把pivot放在最前面），所以**开始时要从后向前查找**，挖坑填数。性能受制于pivot取得好不好，差时退化为选择排序，所以可以通过随机化改进。
 - 归并排序亦作二路归并，是典型的二分分治法，分即将一个数组的排序问题二分为两个，治则采用**双指针合并之**。
 - 堆排序则像是**官职制度**，省长管市长，市长管区长，能者擢升，不能者下放，从而达到整个队列的有序化。
 
-其他：希尔排序、桶排序、基数排序
+## 其他排序
+
+希尔排序、桶排序、基数排序
 
 - 希尔排序可以看做是对插入排序的改进（在lowb三人组中，插入排序是比较好的），初始设置一个gap=length/2（最初Shell声称的版本，后续还有其他的gap计算方式），以gap为步长进行两两比较地插入排序，然后逐渐缩小gap，故亦称**缩小增量排序**。这样做仍然达不到$O(nlogn)$，但是可以减少插入排序的长程交换，最终复杂度改善至$O(n^{1.3\sim2.0})$。关于希尔排序的图解可以参见[菜鸟教程](https://www.runoob.com/data-structures/shell-sort.html)。
 - 桶排序的思想就比较简单了，**一个萝卜一个坑**，开一个很大的内存，你是几就放在第几个，因此内存开销较大且受制于极端数字，但是时间上是O(n)
 - 基数排序则在桶排序的基础上进行改进，即**先比个位再比十位百位**，依次得到大小关系。
 
-参考代码：
+高级三人组参考代码：
 
 - 随机化快排
 ```python
@@ -496,19 +592,208 @@ class Solution:
         return nums
 ```
 
-# 优先队列、heapq
+# 二分查找与bisect
+
+## bisect模块基础
+
+参考资料：[python官方文档 - bisect](https://docs.python.org/3/library/bisect.html)
+
+bisect模块可以省略去写二分查找的过程。查找一般使用`bisect.bisect_left(a, x, lo=0, hi=len(a))`，这里默认a是sorted。bisect_left与bisect_right（等价于bisect）的区别在于，若a中存在对应的value，是插到左边还是右边。
+
+注意插入的过程是指，将x插入返回的位置i后，原[i:]的元素向后移一位，仍保持有序性。
+
+e.g.：
+
+```python
+import bisect
+a = [1, 4, 6, 6, 8, 20]
+bisect.bisect_left(a, 6)
+bisect.bisect(a, 6)
+bisect.bisect_right(a, 6)
+```
+上述三条分别返回2，4，4。
+
+如果想找到位置之后再插入，可以一步使用`insort_left`，或是`insort_right`（等价于`insort`）。但要注意，二分查找的过程是$O(\log n)$的，插入这个操作却是$O(n)$的，算复杂度时记得考虑插入操作。
+
+## 什么时候使用二分查找
+
+- 当给定的数组呈有序性（或是时间复杂度允许我们先进行$O(n\log n)$的排序），并且在一个确定的界限内进行查找时，就可以使用二分查找。所以这样问题的核心是：**有序、查找**。
+- 当出现 最小化最大值、最大化最小值 这样的字样时，也是非常典型的二分答案。我们可以二分查找最值，然后模拟当前值为最值时是否可行。此时我们可以将理解为二分理解为，以一个$O(\log n)$时间复杂度的代价换取了一个条件（最值等于某值），这样问题就被简化了许多。
+
+典型例题：[875. 爱吃香蕉的珂珂](https://leetcode.cn/problems/koko-eating-bananas/)、[剑指 Offer 53 - II. 0～n-1中缺失的数字](https://leetcode.cn/problems/que-shi-de-shu-zi-lcof/)、[2439. 最小化数组中的最大值](https://leetcode.cn/problems/minimize-maximum-of-array/)
+
+## 更高级的key映射查找
+
+在python 3.10之后，还增加了key关键字，即bisect函数变为了`bisect_left(a, x, lo=0, hi=None, *, key=None)`，可以配合lambda函数等方式快捷地使用。具体地，是将x插入到a经过key映射后的位置。所以请注意，**必须保证a在经过key的映射后仍然是升序的，否则比较会出错**。而且与a不同，这个x又是key映射后的，所以说实际使用时key会经常写成一个布尔的判断函数，然后x是True或者False以找到插入的位置。
+
+再具体可以看[源码](https://github.com/python/cpython/blob/3.10/Lib/bisect.py)对于使用key的比较过程。
+
+
+# 关于浮点精度问题
+
+参考资料：[【灵茶山艾府】第 294 场力扣周赛精讲 + 算法练习方法分享](https://www.bilibili.com/video/BV1RY4y157nW)、[IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)
+
+本以为python不会溢出，但还是在294周赛中中招了。python3的int（整数）是可以非常非常长的，所以不用担心；但float64的精度（C++中的double）只能到10^16左右(1 << 53)，所以当出现`1/(10**9-1)和1/(10**9-1)`作差时，分母相乘溢出。
+
+总之，一切除法比较尽量转化成乘法比较！
+
+
+# 拓扑排序
+
+参考资料：[OI WIKI 拓扑排序](https://oi-wiki.org/graph/topo/)、[【拓扑排序】图论拓扑排序入门](https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&mid=2247489706&idx=1&sn=771cd807f39d1ca545640c0ef7e5baec)
+
+总的来说，拓扑排序是用来描述变量与变量之间的上下级关系的算法，可以梳理变量的依赖关系，因而称为“排序”。典型模板题就是A比B大，C比D大，A又比C大……然后排一个总的次序。
+
+
+算法的核心思想则是在一个DAG中，维护一个入度为 0 的顶点的集合。将变量视为图的结点，那么找到所有入度为0（没有边指向它）的顶点，删去其所有指出的边，然后重复此过程。若出现某一时刻没有没有入度为0的点，说明图中有环。因此，拓扑排序也很适合结合DFS或BFS（更推荐BFS），Kahn算法就是BFS下的toposort。
+
+# random
+
+- 基础工具
+  
+python自带的随机库是random。
+
+1. 生成整数随机数：randint(start, stop)，或者randrange(start, stop+1)，两者等价，前者左闭右闭，后者左闭右开，start和stop都是整数。
+2. 生成浮点随机数：uniform(x, y)，左闭右闭！
+3. 生成0-1的随机数：random()，这个是左闭右开，相当于是[0,1)
+4. 从序列返回一个随机元素：choice(seq)。要求序列非空，否则indexError。
+5. 从序列返回多个随机元素：choices(seq, weights=None, cum_weights=None, k=1)。同样要求序列非空（和k的大小无关）。注意choices可以按权重（list格式）或者累计权重来抽样，某些情况下很好使。另外注意choices返回的是list(list())。k=1的时候需要[0]一下。
+   
+更多细节可以参见：[python官方文档 - random](https://docs.python.org/3/library/random.html)。
+
+- 水塘抽样
+
+# @staticmethod
+
+声明，不强制要求传递参数的静态方法。[Python staticmethod() 函数](https://www.runoob.com/python/python-func-staticmethod.html)
+
+
+# 关于哈希、集合的操作
+
+- setdefault
+
+```python
+d = {}
+d.setdefault(key1, a)
+d.setdefault(key1, b)
+```
+
+那么`d[key1]`应该会输出a。setdefault的含义是，对某一键值尝试复制，若存在该键则不做改变，若不存在该键则赋值。这个操作很适合对“存在性”做记录，省去了一些if else的麻烦。
+
+
+# 优先队列、堆
 参考资料：[Python标准库模块之heapq](https://www.jianshu.com/p/801318c77ab5)
 
 此库即优先队列，也即（小根）堆，处理一些流式添加、并维护递增/减性的问题较为好使，时间复杂度在$O(\log n)$。如需使用大根堆可以对list取负。用法：
 
-- 建堆：heapify(list)，或使用heappush对空列表逐个添加元素
+- 建堆：heapify(list)，或使用heappush对空列表逐个添加元素。注意使用heapify时是不会return list的，这应该是一个单独的语句。
 - 添加元素：heappush(list, a)，对list添加a元素，要求list是一个已经建好的堆。如果list不是堆，就直接塞到末尾了。
 - 弹出元素：heappop(list)，弹出堆顶元素并调整推，返回堆顶元素的值。同样如果list不是堆，也是直接弹出列表第一个元素。
 
 # 单调栈/单调队列
-
+<!-- 
 单调栈/单调队列旨在维护一个递增/递减数组的下标，注意几点：
-- 因为其是不断前出后进的，一般要用双向队列
+- 因为其是不断前出后进的，一般要用双向队列 -->
+
+单调栈旨在维护一个单调序列的栈结构，一个比较典型的问题就是，求解某个列表每个数对应的**左/右侧最近的那个小于/大于**它的数的**位置**。
+
+举个例子，比如我们求解`arr = [6,7,5,2,4,9,3]`中每个元素对应左侧最近的小于它的数字位置，若不存在则返回-1，那么目标答案应该是`ans = [-1,0,-1,-1,3,4,3]`，我们维护的单调栈状态应该是：
+
+- 初始为空
+- 考虑第一个数字6，初始为空表明不存在比其更小的数字，故**将6的下标0入栈**，对ans添加-1
+- 考虑下一个数字7，栈顶下标对应数字为6比7小，继续**将7的下标1入栈**，对ans添加栈顶元素0
+- 5比栈顶对应数字7小，栈弹出1；继续比较，5仍比栈顶对应数字6小，弹出0，；此时栈空表示没有更小的数字，将下标2入栈，同时对ans添加-1
+- 下一个数字2比栈顶对应数字5小，栈弹出
+
+注意几点：
+- 单调栈维护的是下标，不是数字
+- 单调栈的“单调”，保证的是栈中下标所对应数字的单调性。
+- 如果需要双向，就搞两个单调栈，一个维护左侧最值（从0到n遍历），一个维护右侧最值（从n-1到-1遍历），这不影响时间复杂度
+- 单调栈的时间复杂度看起来难算，但从遍历的角度来考虑，每个数字必然入栈一次、出栈一次，所以时间复杂度是$O(n)$
+- 当维护左侧最近值时，栈空我们要补-1；当维护右侧最近值时，栈空我们要补n。这个也叫做「哨兵」，可以理解为在-1或是n位置（分别对应左侧、右侧）有一个无穷小的数（如果要维护递增单调栈）。
+
+代码实现的几个要点：
+- 不必显示地定义哨兵，令栈初始为空即可，因为即使你定义了-1或是n也照样要判断。
+- 记录的数组lefts/rights最好先定义好，再修改值，这样写起来会方便一些。如果使用append，在维护右侧时，最终得到的rights数组是“逆向”的。
+- 在循环遍历时，如果要维护左侧最近值就顺序遍历，维护右侧则为倒序；
+- 循环内部，首先对栈顶做while判断，如果要维护严格递增栈，那么意味着栈顶要小于当前值，此时pop的条件就应该是对小于取反，即大于等于的都pop。其他情况以类似的逻辑推断。
+- 当栈空，顺序补-1，倒序补n。
+
+典型例题：[84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)
+
+参考代码（以维护nums数组右侧最近更小值为例）：
+```python
+n = len(nums)
+st = []
+rights = [0] * n
+for i in range(n-1, -1, -1):
+    while st and nums[st[-1]] >= nums[i]:
+        st.pop()
+    rights[i] = st[-1] if st else n
+    st.append(i)
+```
+
+# @cache
+
+此机制源自于functools的lru_cache，在python 3.9之后，其直接被集成在python中，名为cache。我们通常通过装饰器的方式使用之（即对def前添加`@cache`），如果python版本过低，也可以通过`import functools`后`@functools.lru_cache`使用。
+
+缓存机制可以可以将函数调用的结果存入缓存中，从而在再次递归调用时达到复用效果，对像斐波那契数列一类问题的递归解法时有着加速和避免内存爆掉的作用，**广泛应用于记忆化搜索即DP问题**。注意函数的输入尽量是单值变量/元组，对输入是list、dict等结构时不适用。
+
+例如当我们计算斐波那契数列f(5)时，函数被实际调用的次数：
+```python
+cnt = 1
+def f(x):
+    global cnt
+    print("call %d by f(%d)!" % (cnt, x))
+    cnt += 1
+    if x == 1: return 1
+    if x == 2: return 1
+    return f(x-1) + f(x-2)
+
+print(f(5))
+```
+输出：
+```plain
+call 1 by f(5)!
+call 2 by f(4)!
+call 3 by f(3)!
+call 4 by f(2)!
+call 5 by f(1)!
+call 6 by f(2)!
+call 7 by f(3)!
+call 8 by f(2)!
+call 9 by f(1)!
+5
+```
+但是当我们加入cache机制后：
+```python
+cnt = 1
+from functools import cache
+@cache
+def f(x):
+    global cnt
+    print("call %d by f(%d)!" % (cnt, x))
+    cnt += 1
+    if x == 1: return 1
+    if x == 2: return 1
+    return f(x-1) + f(x-2)
+
+print(f(5))
+```
+输出变为了：
+```plain
+call 1 by f(5)!
+call 2 by f(4)!
+call 3 by f(3)!
+call 4 by f(2)!
+call 5 by f(1)!
+5
+```
+
+于是我们就可以递归地写DP和记忆化搜索题了。
+
+
+参考资料：[Python 缓存机制与 functools.lru_cache](http://kuanghy.github.io/2016/04/20/python-cache)，[Python 中 lru_cache 的使用和实现](https://www.cnblogs.com/zikcheng/p/14322577.html)，[Python缓存lru_cache的介绍和讲解](https://quniao.blog.csdn.net/article/details/120726050)
 
 # DP、记忆化搜索
 
@@ -616,5 +901,8 @@ class Solution:
 - 对x * x作为下一组基底，此后循环判断
 
 # 并查集
+
+
+
 
 
