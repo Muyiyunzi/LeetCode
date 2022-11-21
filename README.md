@@ -7,12 +7,12 @@ My LeetCode Record
 
 # 有用的链接
 
-[try-jupyter](https://jupyter.org/try-jupyter/retro/tree)：jupyter官方的试用网站，可以自己新建一个ipynb，在里面试验各种语法，非常好使。
-[灵茶山艾府的b站主页](https://space.bilibili.com/206214)：灵神yyds，每次周赛完必看他的复盘视频，无论是优化简单题的思路还是难题突破，收获很大。
-[leetcode rating](https://zerotrac.github.io/leetcode_problem_rating/#/)：zerotrac（零神）搞的一个力扣题目分数评估的网站，原理是爬取每次周赛做出题目人的分数，来估计一个题目的难度系数。如果有时间，就按照rating和自己分数相近的题目开始刷。
-[力扣刷题插件](https://leetcode.cn/circle/discuss/m3cCMG/)：结合零神的rating统计，可以把周赛中题目的rating直接显示在浏览器上，而不是简单、中等、困难这样区分。在做每日一题时使用效果尤其明显。
-[Guardian & Knight 历史门槛分](https://leetcode.cn/circle/discuss/SKzRis/)：上瓜就图一乐。周赛稳定三题的话，Knight还是比较好上的。
-[oi-wiki](https://oi-wiki.org/)：对于初学者而言，一些语法知识如果不熟悉的话，可以翻看oi-wiki（比如线段树）。当然了oi-wiki可能写的也会杂乱一些，但贵在比较系统。如果oi-wiki的模板啃不下去的话，~~可以结合力扣具体题目的评论区，或是灵神的b站一些周赛题目。哦不对，~~ 看本文档就行。
+- [try-jupyter](https://jupyter.org/try-jupyter/retro/tree)：jupyter官方的试用网站，可以自己新建一个ipynb，在里面试验各种语法，非常好使。
+- [灵茶山艾府的b站主页](https://space.bilibili.com/206214)：灵神yyds，每次周赛完必看他的复盘视频，无论是优化简单题的思路还是难题突破，收获很大。
+- [leetcode rating](https://zerotrac.github.io/leetcode_problem_rating/#/)：zerotrac（零神）搞的一个力扣题目分数评估的网站，原理是爬取每次周赛做出题目人的分数，来估计一个题目的难度系数。如果有时间，就按照rating和自己分数相近的题目开始刷。
+- [力扣刷题插件](https://leetcode.cn/circle/discuss/m3cCMG/)：结合零神的rating统计，可以把周赛中题目的rating直接显示在浏览器上，而不是简单、中等、困难这样区分。在做每日一题时使用效果尤其明显。
+- [Guardian & Knight 历史门槛分](https://leetcode.cn/circle/discuss/SKzRis/)：上瓜就图一乐。周赛稳定三题的话，Knight还是比较好上的。
+- [oi-wiki](https://oi-wiki.org/)：对于初学者而言，一些语法知识如果不熟悉的话，可以翻看oi-wiki（比如线段树）。当然了oi-wiki可能写的也会杂乱一些，但贵在比较系统。如果oi-wiki的模板啃不下去的话，~~可以结合力扣具体题目的评论区，或是灵神的b站一些周赛题目。哦不对，~~ 看本文档就行。
 
 # split()与split(' ')：
 
@@ -39,7 +39,7 @@ print('a b'.split(' ')) # -> ['a', 'b']
 
 # 树的前、中、后序遍历模板
 
-- 首先是递归写法：
+## 递归
 
 以后序遍历为例
 ```python
@@ -70,7 +70,7 @@ def postOrder(root: TreeNode) -> None:
 ```
 不过上一种方式更加清晰。知道就好。
 
-- 迭代写法：
+## 迭代
 
 迭代写法的主体框架是：
 ```python
@@ -94,9 +94,9 @@ return ans
 2. 中序则在入栈出栈之间的访问；
 3. 后序则比较棘手了，需要维护一个prev，确保右孩子访问过，才执行操作（必须区分我是向后执行右探操作呢，还是该直接对当前元素操作）。
 
-----
+参考代码：
 
-前序
+- 前序
 ```python
 ans = []
 stack = []
@@ -112,7 +112,7 @@ return ans
 ```
         
 
-中序
+- 中序
 ```python
 ans = []
 stack = []
@@ -129,7 +129,7 @@ while stack or cur:
 return ans
 ```
 
-后序（注意两点，一是右探时，对自身不操作，还要重新压栈回去等后续操作；二是对当前元素操作后，记得先记录pre为当前结点，后必须将当前结点赋空，以免再度判断操作，两者的顺序不能反）
+- 后序（注意两点，一是右探时，对自身不操作，还要重新压栈回去等后续操作；二是对当前元素操作后，记得先记录pre为当前结点，后必须将当前结点赋空，以免再度判断操作，两者的顺序不能反）
 
 ```python
 ans = []
@@ -152,14 +152,17 @@ return ans
 
 # nonlocal，global与作用域搜索顺序
 
-当我们在python中访问某一对象时，其会根据L-E-G-B的作用域（scope）搜索顺序去寻找这一变量。其中，“LEGB”依次为：
-- Local，局部作用域，例如某个函数、lambda表达式中。此作用域包含了当前函数下的所有变量内容，且这些变量只在函数被调用时产生（而非def时），理论上被调用多少次就产生多少个local scope。
-- If the local scope is an inner or nested function, then the enclosing scope is the scope of the outer or enclosing function
-- Enclosing，包含作用域，如果Local域处于**一个**函数的内部或是被包装的函数，那么其外围或者包含它的函数，就是Enclosing作用域。例如某个def1中有个def2，def2是L，那么def1就是其E。如果嵌套的函数更多，就应该有更多级的E。建议理解为介于L与G之间。
-- Global，全局作用域，这个好理解，就是整个script下的空间，是整个python脚本最高级、最外围的一层。
-- Built-in，内建作用域，这个一般不会涉及，属于是加载python脚本时就被自动加载的内容，例如abs，min，max这些内建函数等等，但这也侧面提醒我们在命名变量时尽量不要和这些内建函数名重叠。
+## 作用域
 
-寻找的顺序便是，**如果L找不到，就向上逐级地找E，再找不到就找G，直到B**。
+当我们在python中访问某一对象时，其会根据L-E-G-B的作用域（scope）搜索顺序去寻找这一变量。其中，“LEGB”依次为：
+- **Local**，局部作用域，例如某个函数、lambda表达式中。此作用域包含了当前函数下的所有变量内容，且这些变量只在函数被调用时产生（而非def时），理论上被调用多少次就产生多少个local scope。
+- **Enclosing**，包含作用域，*如果Local域处于**一个**函数的内部或是被包装的函数，那么其外围或者包含它的函数，就是Enclosing作用域*\*。例如某个def1中有个def2，如果def2是L，那么def1就是其E。如果嵌套的函数更多，就应该有更多级的E。建议理解为介于L与G之间。
+- **Global**，全局作用域，这个好理解，就是整个script下的空间，是整个python脚本最高级、最外围的一层。
+- **Built-in**，内建作用域，这个一般不会涉及，属于是加载python脚本时就被自动加载的内容，例如abs，min，max这些内建函数等等，但这也侧面提醒我们在命名变量时尽量不要和这些内建函数名重叠。
+
+（*处原句为：If the local scope is an inner or nested function, then the enclosing scope is the scope of the outer or enclosing function）
+
+寻找某个对象的顺序便是，**如果L找不到，就向上逐级地找E，再找不到就找G，直到B**。
 
 举个例子就明白了，如下演示了一个L向上找E再向上找G的例子：
 ```python
@@ -181,14 +184,14 @@ arr = [1,5,3]
 print(max(arr))
 ```
 
----
+## 改变访问优先级
 
 以上内容仅仅是变量名访问，那么当我们不想按照这样的优先级去检索变量，或是要修改外部变量值的时候，就会用nonlocal和global关键字。
 
-- nonlocal只能应用在L访问**和修改**E中变量的情况下；通俗地讲，nonlocal只能逐级地向上访问是否存在该变量，直到找到或找不到为止，且上级作用域不能是G。
+- nonlocal只能应用在L访问和修改E中变量的情况下；通俗地讲，nonlocal只能逐级地向上访问是否存在该变量，直到找到或找不到为止，且上级作用域不能是G。
 - global则用于**定义**、访问和修改G中的变量。
-- 注意，使用nonlocal时，其所有的上级E中必须有相关的变量先定义好才能被nonlocal调用，global则不必在G中预先定义，可以在global之后新定义（但不能直接修改值）。nonlocal x意为“找到更上级的x，我要修改他”，而global x则好像是在说“我接下来对x的操作是全局性的”。
-- 无论是nonlocal还是global，Local中都不得实现定义同名的变量（但使用global时，E可以有同名变量）。
+- 注意，使用nonlocal时，其所有的上级E中必须有相关的变量先定义好才能被nonlocal调用，global则不必在G中预先定义，可以在global之后新定义（但不能直接修改值）。**nonlocal x意为“找到更上级的x，我要修改他”，而global x则好像是在说“我接下来对x的操作是全局性的”。**
+- 无论是nonlocal还是global，Local中都不得实现定义同名的变量（但使用global时，L和G夹层的E可以有同名变量）。
 - 无论是nonlocal还是global，都是为了将**不可变类型的数据变为自由变量**，对于可变变量就没必要使用了，比如list等。究其根本，可能是因为局部变量都会产生新的地址，修改了值也就修改了地址，而list等添加新数值或修改时不改变其内存地址。
 
 举个例子就比较清楚了：
@@ -265,7 +268,7 @@ print(a, b)
 
 从输出可以看出，此时a、b两个列表被关联了。
 
-另外，如果当前域在某个class中，并传入了self参数，也可以巧用self关键字通过使用self.xxx修改其属性来尽可能避免频繁使用nonlocal。【好吧我摊牌了，可以说专治LeetCode题了】
+另外，如果当前域在某个class中，并传入了self参数，也可以巧用self关键字通过使用self.xxx修改其属性来尽可能避免频繁使用nonlocal。【self专治LeetCode题好吧】
 
 ---
 
